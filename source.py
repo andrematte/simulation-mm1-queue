@@ -39,10 +39,11 @@ def run_sim_and_plot(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEA
     
     parameters = build_parameters(NUM_JOBS, MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE)
     #TODO Function: Print simulation details
-    result = run_sim(parameters)
+    results = run_sim(parameters)
     #TODO Function: Dump Stats
-    #TODO Function: Plot Result
+    #TODO Function: Plot Result    
     
+    return results
 
 
 def run_sim(parameters):
@@ -55,7 +56,7 @@ def run_sim(parameters):
     MEAN_INTERARRIVAL_TIME = parameters['MEAN_INTERARRIVAL_TIME']
     MEAN_SERVICE_TIME = parameters['MEAN_SERVICE_TIME']
     
-    # Dados e Resultados ???????
+    # Computar dados de Simulação e Resultados 
     ## Exponential
     interrarival_times = rng.exponential(scale=MEAN_INTERARRIVAL_TIME, size=NUM_JOBS)
     arrival_times = np.cumsum(interrarival_times)
@@ -63,13 +64,10 @@ def run_sim(parameters):
     
     ## Criação de dataframes de tarefas e eventos
     df_jobs = build_jobs_df(parameters, interrarival_times, arrival_times, service_times)
-    #df_events = build_events_df(parameters, df_jobs)
-    #total_width = get_total_width(df_jobs)
+    df_events = build_events_df(parameters, df_jobs)
     
+    return get_result(parameters, df_jobs, df_events)
     
-    
-    
-
 
 def build_jobs_df(parameters, interrarival_times, arrival_times, service_times):
     '''
@@ -103,17 +101,119 @@ def build_jobs_df(parameters, interrarival_times, arrival_times, service_times):
     return df_jobs
     
 
-def build_events_df():
+def build_events_df(parameters, df_jobs):
     '''
     Cria um dataframe para armazenar detalhes dos eventos.
     '''
-    pass
+    NUM_JOBS = parameters['NUM_JOBS']
+    arrivals = df_jobs['arrive_time']
+    starts = df_jobs['start_time']
+    departures = df_jobs['depart_time']
+    
+    # Width = up_bd - lo_bd
+    # jobs_in_qeue = jobs_in_system - 1
+        
+    df_events = pd.DataFrame(columns=['lo_bd', 'up_bd', 'width',
+                                      'jobs_in_system', 'jobs_in_queue'])
+    
+    lo_bd = 0
+    arrive_idx = 0
+    start_idx = 0
+    depart_idx = 0
+    jobs_in_system = 0
+    jobs_in_queue = 0
+    
+    while depart_idx < NUM_JOBS:
+        # Armazena chegada, inicio e saida da tarefa atual
+        arrival = arrivals[arrive_idx] if arrive_idx < NUM_JOBS else float('inf')
+        start = starts[start_idx] if start_idx < NUM_JOBS else float('inf')
+        departure = departures[depart_idx]
+        
+        # Controla fluxo de chegadas, partidas e fila
+        if arrival <= start and arrival <= departure:
+            up_bd = arrival
+            n_change, nq_change = 1, 1
+            arrive_idx += 1
+            
+        elif start <= arrival and start <= departure:
+            up_bd = start 
+            n_change, nq_change = 0, -1
+            start_idx += 1
+            
+        else: 
+            up_bd = departure
+            n_change, nq_change = -1, 0
+            depart_idx += 1
+
+        width = up_bd - lo_bd
+            
+        # Adiciona dados no dataframe de eventos
+        df_events = df_events.append({
+            'lo_bd': lo_bd,
+            'up_bd': up_bd,
+            'width': width,
+            'jobs_in_system': jobs_in_system,
+            'jobs_in_queue': jobs_in_queue,
+            'jobs_in_system_change': n_change,
+            'jobs_in_queue_change': nq_change,
+        }, ignore_index=True)
+        
+        # Atualiza o numero de itens no sistema e na fila
+        jobs_in_system += n_change
+        jobs_in_queue += nq_change
+        
+        lo_bd = up_bd
+        
+    return df_events
 
 
 def get_total_width(df_jobs):
-    '''
-    ?
-    '''
-    pass
+    return df_jobs.iloc[-1]['depart_time'] - df_jobs.iloc[0]['arrive_time']
 
+
+def estimate_utilization(df_jobs):
+    busy = (df_jobs['depart_time'] - df_jobs['start_time']).sum()
+    return busy / get_total_width(df_jobs)
+
+
+def get_result(parameters, df_jobs, df_events):
+    
+    sim_mean_interarrival_time = df_jobs['interarrival_time'].mean()
+    sim_mean_arrival_rate = 1.0 / sim_mean_interarrival_time
+    sim_mean_service_time = df_jobs['service_time'].mean()
+    sim_mean_service_rate = 1.0 / sim_mean_service_time
+    sim_mean_wait_time = df_jobs['wait_time'].mean()
+    sim_response_time_mean = df_jobs['response_time'].mean()
+    sim_response_time_var = df_jobs['response_time'].var()
+    
+    width = df_events['width']
+    total_weighted_num_jobs_in_system = (width * df_events['jobs_in_system']).sum()
+    total_weighted_num_jobs_in_queue  = (width * df_events['jobs_in_queue']).sum()
+    sim_mean_jobs_in_system = total_weighted_num_jobs_in_system / get_total_width(df_jobs)
+    sim_mean_jobs_in_queue  = total_weighted_num_jobs_in_queue / get_total_width(df_jobs)
+    
+    departures = df_events.loc[df_events['jobs_in_system_change'] == -1.0, 'lo_bd']
+    hist, _ = np.histogram(departures, bins=int(get_total_width(df_jobs)) + 1)
+    sim_throughput_mean = np.mean(hist)
+    utilization = estimate_utilization(df_jobs)    
+    
+    results = {
+        'parameters': parameters,
+        'jobs': df_jobs,
+        'events': df_events,
+        'total_duration': get_total_width(df_jobs),
+        'mean_arrival_rate': sim_mean_arrival_rate,
+        'mean_interarrival_time': sim_mean_interarrival_time,
+        'mean_service_rate': sim_mean_service_rate,
+        'mean_service_time': sim_mean_service_time,
+        'mean_wait_time': sim_mean_wait_time,
+        'response_time_mean': sim_response_time_mean,
+        'response_time_var': sim_response_time_var,
+        'mean_jobs_in_system': sim_mean_jobs_in_system,
+        'mean_jobs_in_queue': sim_mean_jobs_in_queue,
+        'throughput_mean': sim_throughput_mean,
+        'utilization': utilization
+        }
+    
+    return results
 
