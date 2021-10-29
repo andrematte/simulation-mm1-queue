@@ -5,8 +5,8 @@ import pandas as pd
 import random as rd
 import matplotlib.pyplot as plt
 
-from source import *
-from settings import *
+from src.plotting import *
+from src.settings import *
 
 # Determinar a seed do RNG
 rng = np.random.default_rng(SEED)
@@ -38,12 +38,11 @@ def run_sim_and_plot(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEA
     '''
     Executa a simulação (run_sim) e plota os resultados (plot_results).
     '''
-    
     parameters = build_parameters(NUM_JOBS, MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE)
     #TODO Function: Print simulation details
     results = run_sim(parameters)
     #TODO Function: Dump Stats
-    #TODO Function: Plot Result    
+    plot_result(results)   
     
     return results
 
@@ -81,8 +80,9 @@ def run_sim(parameters):
         
         elif event_types[i] =='3':
             # Evento 3: Não é possível realizar atendimento, tempo de serviço = 0.
+            delay = np.random.rand() * (10-5) + 5
             interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
-            service_times.append(0)
+            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME)/delay )
     
     
     arrival_times = np.cumsum(interrarival_times)    
