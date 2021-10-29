@@ -26,7 +26,9 @@ def build_parameters(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEA
         'MEAN_SERVICE_RATE': MEAN_SERVICE_RATE,
         'MEAN_INTERARRIVAL_TIME': 1.0 / MEAN_ARRIVAL_RATE,
         'MEAN_SERVICE_TIME': 1.0 / MEAN_SERVICE_RATE,
-        'NUM_BINS': int(NUM_JOBS / MEAN_ARRIVAL_RATE)
+        'NUM_BINS': int(NUM_JOBS / MEAN_ARRIVAL_RATE),
+        'EVENT_TYPES': EVENT_TYPES,
+        'EVENT_WEIGHTS': EVENT_WEIGHTS
     }
     
     return parameters
@@ -55,21 +57,44 @@ def run_sim(parameters):
     NUM_JOBS = parameters['NUM_JOBS']
     MEAN_INTERARRIVAL_TIME = parameters['MEAN_INTERARRIVAL_TIME']
     MEAN_SERVICE_TIME = parameters['MEAN_SERVICE_TIME']
+    EVENT_TYPES = parameters['EVENT_TYPES']
+    EVENT_WEIGHTS = parameters['EVENT_WEIGHTS']
     
     # Computar dados de Simulação e Resultados 
     ## Exponential
-    interrarival_times = rng.exponential(scale=MEAN_INTERARRIVAL_TIME, size=NUM_JOBS)
-    arrival_times = np.cumsum(interrarival_times)
-    service_times = rng.exponential(scale=MEAN_SERVICE_TIME, size=NUM_JOBS)
+    #TODO Transformar em função  
+    interrarival_times = []
+    service_times = []
+    
+    event_types = [np.random.choice(EVENT_TYPES, 1, p=EVENT_WEIGHTS)[0] for i in range(NUM_JOBS)]
+    for i in range(NUM_JOBS):
+        if event_types[i] == '1':
+            # Evento 1: Atendimento ocorro normalmente.
+            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
+            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME) )
+            
+        elif event_types[i] == '2':
+            # Evento 2: Caso de imprevisto, atendimento leva um tempo de 5 a 10x maior.
+            delay = np.random.rand() * (10-5) + 5
+            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
+            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME)*delay )
+        
+        elif event_types[i] =='3':
+            # Evento 3: Não é possível realizar atendimento, tempo de serviço = 0.
+            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
+            service_times.append(0)
+    
+    
+    arrival_times = np.cumsum(interrarival_times)    
     
     ## Criação de dataframes de tarefas e eventos
-    df_jobs = build_jobs_df(parameters, interrarival_times, arrival_times, service_times)
+    df_jobs = build_jobs_df(parameters, interrarival_times, arrival_times, service_times, event_types)
     df_events = build_events_df(parameters, df_jobs)
     
     return get_result(parameters, df_jobs, df_events)
     
 
-def build_jobs_df(parameters, interrarival_times, arrival_times, service_times):
+def build_jobs_df(parameters, interrarival_times, arrival_times, service_times, event_types):
     '''
     Cria um dataframe para armazenar detalhes das tarefas.
     '''
@@ -80,7 +105,8 @@ def build_jobs_df(parameters, interrarival_times, arrival_times, service_times):
         'arrive_time': arrival_times,
         'service_time': service_times,
         'start_time': np.zeros(parameters['NUM_JOBS']),
-        'depart_time': np.zeros(parameters['NUM_JOBS'])
+        'depart_time': np.zeros(parameters['NUM_JOBS']),
+        'event_type': event_types
     })
 
     # Preenche tempos de chegada e partida
@@ -109,11 +135,12 @@ def build_events_df(parameters, df_jobs):
     arrivals = df_jobs['arrive_time']
     starts = df_jobs['start_time']
     departures = df_jobs['depart_time']
+    event_types = df_jobs['event_type']
     
     # Width = up_bd - lo_bd
     # jobs_in_qeue = jobs_in_system - 1
         
-    df_events = pd.DataFrame(columns=['lo_bd', 'up_bd', 'width',
+    df_events = pd.DataFrame(columns=['event_type', 'lo_bd', 'up_bd', 'width',
                                       'jobs_in_system', 'jobs_in_queue'])
     
     lo_bd = 0
@@ -128,6 +155,7 @@ def build_events_df(parameters, df_jobs):
         arrival = arrivals[arrive_idx] if arrive_idx < NUM_JOBS else float('inf')
         start = starts[start_idx] if start_idx < NUM_JOBS else float('inf')
         departure = departures[depart_idx]
+        type = event_types[depart_idx]
         
         # Controla fluxo de chegadas, partidas e fila
         if arrival <= start and arrival <= departure:
@@ -149,6 +177,7 @@ def build_events_df(parameters, df_jobs):
             
         # Adiciona dados no dataframe de eventos
         df_events = df_events.append({
+            'event_type': type,
             'lo_bd': lo_bd,
             'up_bd': up_bd,
             'width': width,
