@@ -16,18 +16,15 @@ def plot_result(results):
     events = results['events']
     
     _plot_gantt_chart(parameters, jobs)
-    _plot_jobs_over_time(events)
+    _plot_queue_over_time(events)
     _plot_histogram(parameters, jobs['interarrival_time'], 'Histogram of Interarrival Times', 'Interarrival Time')
-    _plot_histogram(parameters, jobs['arrive_time'], 'Histogram of Arrival Times', 'Arrival Time')
     _plot_histogram(parameters, jobs['wait_time'], 'Histogram of Wait Times', 'Wait Time')
     _plot_histogram(parameters, jobs['service_time'], 'Histogram of Service Times', 'Service Time')
-    _plot_histogram(parameters, jobs['response_time'], 'Histogram of Response Times', 'Response Time')
     
     mean_service_time_per_type = results['jobs'][['event_type', 'service_time']].groupby('event_type').mean()
     _plot_bar(mean_service_time_per_type.index, mean_service_time_per_type['service_time'],
               'Mean Service Time per Event Type', 'Mean Service Time', 'Type')
     
-   
     
 def _plot_gantt_chart(parameters, jobs):
     '''
@@ -76,15 +73,15 @@ def _plot_gantt_chart(parameters, jobs):
     plt.show()
 
 
-def _plot_jobs_over_time(events):
+def _plot_queue_over_time(events):
     '''
     Plotagem do número de itens no sistema ao longo do tempo.
     '''
     plt.figure(figsize=FIG_SIZE)
-    plt.title('Number of Jobs in System', size=TITLE_SIZE)
+    plt.title('Number of Jobs in Queue over Time', size=TITLE_SIZE)
     plt.xlabel('Time', size=LABEL_SIZE)
     plt.ylabel('Count', size=LABEL_SIZE)
-    plt.plot(events['lo_bd'], events['jobs_in_system'])
+    plt.plot(events['lo_bd'], events['jobs_in_queue'])
     plt.show()
 
 

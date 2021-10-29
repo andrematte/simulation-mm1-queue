@@ -15,30 +15,10 @@ rng = np.random.default_rng(SEED)
 
 # --------------------------------- Simulação -------------------------------- #
 
-def build_parameters(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE=MEAN_SERVICE_RATE):
-    '''
-    Calcula e retorna dicionário contendo os parâmetros de simulação.
-    '''
-    
-    parameters = {
-        'NUM_JOBS': NUM_JOBS,
-        'MEAN_ARRIVAL_RATE': MEAN_ARRIVAL_RATE,
-        'MEAN_SERVICE_RATE': MEAN_SERVICE_RATE,
-        'MEAN_INTERARRIVAL_TIME': 1.0 / MEAN_ARRIVAL_RATE,
-        'MEAN_SERVICE_TIME': 1.0 / MEAN_SERVICE_RATE,
-        'NUM_BINS': int(NUM_JOBS / MEAN_ARRIVAL_RATE),
-        'EVENT_TYPES': EVENT_TYPES,
-        'EVENT_WEIGHTS': EVENT_WEIGHTS
-    }
-    
-    return parameters
-
-
-def run_sim_and_plot(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE=MEAN_SERVICE_RATE):
+def run_sim_and_plot(parameters=parameters):
     '''
     Executa a simulação (run_sim) e plota os resultados (plot_results).
     '''
-    parameters = build_parameters(NUM_JOBS, MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE)
     #TODO Function: Print simulation details
     results = run_sim(parameters)
     #TODO Function: Dump Stats
@@ -50,42 +30,9 @@ def run_sim_and_plot(NUM_JOBS=NUM_JOBS, MEAN_ARRIVAL_RATE=MEAN_ARRIVAL_RATE, MEA
 def run_sim(parameters):
     '''
     Executa a simulação e retorna resultados.
-    '''
-    
-    # Parâmetros de simulação
-    NUM_JOBS = parameters['NUM_JOBS']
-    MEAN_INTERARRIVAL_TIME = parameters['MEAN_INTERARRIVAL_TIME']
-    MEAN_SERVICE_TIME = parameters['MEAN_SERVICE_TIME']
-    EVENT_TYPES = parameters['EVENT_TYPES']
-    EVENT_WEIGHTS = parameters['EVENT_WEIGHTS']
-    
+    '''    
     # Computar dados de Simulação e Resultados 
-    ## Exponential
-    #TODO Transformar em função  
-    interrarival_times = []
-    service_times = []
-    
-    event_types = [np.random.choice(EVENT_TYPES, 1, p=EVENT_WEIGHTS)[0] for i in range(NUM_JOBS)]
-    for i in range(NUM_JOBS):
-        if event_types[i] == '1':
-            # Evento 1: Atendimento ocorro normalmente.
-            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
-            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME) )
-            
-        elif event_types[i] == '2':
-            # Evento 2: Caso de imprevisto, atendimento leva um tempo de 5 a 10x maior.
-            delay = np.random.rand() * (10-5) + 5
-            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
-            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME)*delay )
-        
-        elif event_types[i] =='3':
-            # Evento 3: Não é possível realizar atendimento, tempo de serviço = 0.
-            delay = np.random.rand() * (10-5) + 5
-            interrarival_times.append( rng.exponential(scale=MEAN_INTERARRIVAL_TIME) )
-            service_times.append( rng.exponential(scale=MEAN_SERVICE_TIME)/delay )
-    
-    
-    arrival_times = np.cumsum(interrarival_times)    
+    interrarival_times, service_times, arrival_times, event_types = generate_times(parameters)
     
     ## Criação de dataframes de tarefas e eventos
     df_jobs = build_jobs_df(parameters, interrarival_times, arrival_times, service_times, event_types)
@@ -93,6 +40,54 @@ def run_sim(parameters):
     
     return get_result(parameters, df_jobs, df_events)
     
+
+def generate_from_distribution(rng, scale, distribution):
+    if distribution == 'exponential':
+        return rng.exponential(scale=scale)
+    elif distribution == 'triangular':
+        return rng.triangular(0, scale, scale*10)
+    elif distribution == 'normal':
+        return rng.normal(scale, scale/10)
+    elif distribution == 'uniform':
+        return rng.uniform(0, scale*2)
+
+
+def generate_times(parameters):
+    # Parâmetros de simulação
+    NUM_JOBS = parameters['NUM_JOBS']
+    MEAN_INTERARRIVAL_TIME = parameters['MEAN_INTERARRIVAL_TIME']
+    MEAN_SERVICE_TIME = parameters['MEAN_SERVICE_TIME']
+    EVENT_TYPES = parameters['EVENT_TYPES']
+    EVENT_WEIGHTS = parameters['EVENT_WEIGHTS']
+    DISTRIBUTION = parameters['DISTRIBUTION']
+    
+    interrarival_times = []
+    service_times = []
+    
+    event_types = [np.random.choice(EVENT_TYPES, 1, p=EVENT_WEIGHTS)[0] for i in range(NUM_JOBS)]
+    for i in range(NUM_JOBS):
+        if event_types[i] == '1':
+            # Evento 1: Atendimento ocorro normalmente.
+            interrarival_times.append( generate_from_distribution(rng, scale=MEAN_INTERARRIVAL_TIME, distribution='exponential') )
+            service_times.append( generate_from_distribution(rng, scale=MEAN_SERVICE_TIME, distribution=DISTRIBUTION) )
+            
+        elif event_types[i] == '2':
+            # Evento 2: Caso de imprevisto, atendimento leva um tempo de 5 a 10x maior.
+            delay = np.random.rand() * (10-5) + 5
+            interrarival_times.append( generate_from_distribution(rng, scale=MEAN_INTERARRIVAL_TIME, distribution='exponential') )
+            service_times.append( generate_from_distribution(rng, scale=MEAN_SERVICE_TIME, distribution=DISTRIBUTION)*delay )
+        
+        elif event_types[i] =='3':
+            # Evento 3: Não é possível realizar atendimento, tempo de serviço = 0.
+            delay = np.random.rand() * (10-5) + 5
+            interrarival_times.append( generate_from_distribution(rng, scale=MEAN_INTERARRIVAL_TIME, distribution='exponential') )
+            service_times.append( generate_from_distribution(rng, scale=MEAN_SERVICE_TIME, distribution=DISTRIBUTION)/delay )
+    
+    
+    arrival_times = np.cumsum(interrarival_times)   
+    
+    return interrarival_times, service_times, arrival_times, event_types
+
 
 def build_jobs_df(parameters, interrarival_times, arrival_times, service_times, event_types):
     '''
