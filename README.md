@@ -50,5 +50,7 @@ run_sim_and_plot(parameters)
 
 
 [1] https://github.com/williewheeler/stats-demos/blob/master/queueing/single-queue-sim.ipynb 
+
 [2] https://medium.com/wwblog/simulating-an-m-m-1-queue-in-python-f894f5a68db2
+
 [3] https://web.fe.up.pt/~mac/ensino/docs/IO20032004/FilasEspera.pdf
