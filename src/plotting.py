@@ -17,13 +17,13 @@ def plot_result(results):
     
     _plot_gantt_chart(parameters, jobs)
     _plot_queue_over_time(events)
-    _plot_histogram(parameters, jobs['interarrival_time'], 'Histogram of Interarrival Times', 'Interarrival Time')
-    _plot_histogram(parameters, jobs['wait_time'], 'Histogram of Wait Times', 'Wait Time')
-    _plot_histogram(parameters, jobs['service_time'], 'Histogram of Service Times', 'Service Time')
+    _plot_histogram(parameters, jobs['interarrival_time'], 'Histograma de Tempos entre Chegadas', 'Tempo entre Chegadas')
+    _plot_histogram(parameters, jobs['wait_time'], 'Histograma de Tempos de Espera', 'Tempo de Espera')
+    _plot_histogram(parameters, jobs['service_time'], 'Histograma de Tempos de Serviço', 'Tempo de Serviço')
     
     mean_service_time_per_type = results['jobs'][['event_type', 'service_time']].groupby('event_type').mean()
     _plot_bar(mean_service_time_per_type.index, mean_service_time_per_type['service_time'],
-              'Mean Service Time per Event Type', 'Mean Service Time', 'Type')
+              'Tempo Médio de Serviço por Tipo de Atendimento', 'Tempo Médio de Serviço', 'Tipo')
     
     
 def _plot_gantt_chart(parameters, jobs):
@@ -45,9 +45,9 @@ def _plot_gantt_chart(parameters, jobs):
             colors.append('gold')
     
     plt.figure(figsize=GANTT_SIZE)
-    plt.title('Job Schedule (partial)', size=TITLE_SIZE)
-    plt.xlabel('Time', size=LABEL_SIZE)
-    plt.ylabel('Job ID', size=LABEL_SIZE)
+    plt.title('Diagrama de Gantt Parcial (Atendimentos)', size=TITLE_SIZE)
+    plt.xlabel('Tempo', size=LABEL_SIZE)
+    plt.ylabel('ID do Cliente', size=LABEL_SIZE)
     
     plt.barh(
         y=trunc_df.index,
@@ -78,9 +78,9 @@ def _plot_queue_over_time(events):
     Plotagem do número de itens no sistema ao longo do tempo.
     '''
     plt.figure(figsize=FIG_SIZE)
-    plt.title('Number of Jobs in Queue over Time', size=TITLE_SIZE)
-    plt.xlabel('Time', size=LABEL_SIZE)
-    plt.ylabel('Count', size=LABEL_SIZE)
+    plt.title('Número de Clientes na Fila', size=TITLE_SIZE)
+    plt.xlabel('Tempo', size=LABEL_SIZE)
+    plt.ylabel('Clientes na Fila', size=LABEL_SIZE)
     plt.plot(events['lo_bd'], events['jobs_in_queue'])
     plt.show()
 

@@ -1,9 +1,11 @@
 # ------------------------------- Configuração ------------------------------- #
 # Importar bibliotecas
+from IPython.core.display import display
 import numpy as np
 import pandas as pd
 import random as rd
 import matplotlib.pyplot as plt
+from IPython.display import Markdown
 
 from src.plotting import *
 from src.settings import *
@@ -19,9 +21,9 @@ def run_sim_and_plot(parameters=parameters):
     '''
     Executa a simulação (run_sim) e plota os resultados (plot_results).
     '''
-    #TODO Function: Print simulation details
+    print_title(parameters)
     results = run_sim(parameters)
-    #TODO Function: Dump Stats
+    print_results(results)
     plot_result(results)   
     
     return results
@@ -241,3 +243,63 @@ def get_result(parameters, df_jobs, df_events):
     
     return results
 
+
+# ---------------------------- Imprimir Resultados --------------------------- #
+
+def format(value):
+    return f"{value:,.4f}"
+
+
+def print_title(parameters):
+
+    print('Simulação')
+    print('-------------------------')
+    print(f'Número de Clientes:              = {format( parameters["NUM_JOBS"] )}')
+    print(f'Taxa Média de Chegada (Lambda)   = {format( parameters["MEAN_ARRIVAL_RATE"] )}')
+    print(f'Taxa Média de Serviço (Mu)       = {format( parameters["MEAN_SERVICE_RATE"] )}')
+    print(f'Tempo Médio Entre Chegadas       = {format( 1.0/parameters["MEAN_ARRIVAL_RATE"])}')
+    print(f'Tempo Médio de Serviço           = {format( 1.0/parameters["MEAN_SERVICE_RATE"])}')
+    print()
+    print()
+    print()
+    
+
+def print_results(results):
+    parameters = results['parameters']
+    jobs = results['jobs']
+    response_time = jobs['response_time']
+    mean_arrival_rate = results['mean_arrival_rate']
+    mean_service_rate = results['mean_service_rate']
+    mean_service_time = results['mean_service_time']
+    mean_response_time = results['response_time_mean']
+    mean_throughput = results['throughput_mean']
+    util = results['utilization']
+    mean_jobs_in_system = results['mean_jobs_in_system']
+    
+    print('Estatísticas de Simulação')    
+    print('-------------------------')
+    
+    print(f'Duração Total                   = {format( results["total_duration"] )}')
+    
+    print('Taxas Médias:')
+    print()
+    print(f'Taxa de Chegada                 = {format( mean_arrival_rate )}') 
+    print(f'Tempo entre Chegadas            = {format( results["mean_interarrival_time"] )}')
+    print(f'Tempo de Resposta               = {format( mean_response_time )}')
+    print(f'Tempo de Espera                 = {format( results["mean_wait_time"] )}')
+    print(f'Taxa de Serviço                 = {format( mean_service_rate )}')
+    print(f'Tempo de Serviço                = {format( mean_service_time )}')
+    print(f'Clientes no Sistema             = {format( mean_jobs_in_system )}')
+    print(f'Clientes na Fila                = {format( results["mean_jobs_in_queue"] )}')
+    print(f'Throughput                      = {format( mean_throughput )}')
+    print(f'Utilização                      = {format( util)}')
+    print()
+    print()
+    print()
+    
+    print(f'Lei de Little: E[N] = lambda * E[T]')    
+    print(f'-------------------------')
+    print(f'Média de Clientes no Sistema   = {format( mean_jobs_in_system )}')
+    print(f'T. de Chegada * T. de Resposta = {format( mean_arrival_rate*mean_response_time )}')
+    
+    
