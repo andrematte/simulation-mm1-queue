@@ -77,7 +77,7 @@ def generate_times(parameters):
             
         elif event_types[i] == '2':
             # Evento 2: Caso de imprevisto, atendimento leva um tempo de 5 a 10x maior.
-            delay = np.random.rand() * (10-5) + 5
+            delay = np.random.rand() * (8-3) + 3
             interrarival_times.append( generate_from_distribution(rng, scale=MEAN_INTERARRIVAL_TIME, distribution='exponential') )
             service_times.append( generate_from_distribution(rng, scale=MEAN_SERVICE_TIME, distribution=DISTRIBUTION)*delay )
         
@@ -282,7 +282,9 @@ def print_results(results):
     print('-------------------------')
     
     print(f'Duração Total                   = {format( results["total_duration"] )}')
-    
+    print()
+    print()
+    print()
     print('Taxas Médias:')
     print()
     print(f'Taxa de Chegada                 = {format( mean_arrival_rate )}') 

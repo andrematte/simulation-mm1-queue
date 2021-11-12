@@ -31,8 +31,8 @@ def _plot_gantt_chart(parameters, jobs):
     Tarefas representadas pelo Diagrama de Gantt.
     '''
     num_jobs = parameters['NUM_JOBS']
-    start_job = int(num_jobs/4)
-    end_job = start_job+30
+    start_job = int(num_jobs/5)
+    end_job = start_job+50
     trunc_df = jobs[start_job:end_job]
     
     colors=[]
