@@ -301,9 +301,4 @@ def print_results(results):
     print()
     print()
     
-    print(f'Lei de Little: E[N] = lambda * E[T]')    
-    print(f'-------------------------')
-    print(f'Média de Clientes no Sistema   = {format( mean_jobs_in_system )}')
-    print(f'T. de Chegada * T. de Resposta = {format( mean_arrival_rate*mean_response_time )}')
-    
     
