@@ -43,7 +43,7 @@ def run_sim(parameters):
     return get_result(parameters, df_jobs, df_events)
     
 
-def generate_from_distribution(rng, scale, distribution):
+def generate_from_distribution(rng, scale, distribution, constant=0):
     if distribution == 'exponential':
         return rng.exponential(scale=scale)
     elif distribution == 'triangular':
@@ -52,6 +52,8 @@ def generate_from_distribution(rng, scale, distribution):
         return rng.normal(scale, scale/10)
     elif distribution == 'uniform':
         return rng.uniform(0, scale*2)
+    elif distribution == 'constant':
+        return constant
 
 
 def generate_times(parameters):
