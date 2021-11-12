@@ -34,17 +34,15 @@ O simulador será avaliado com base nos seguintes critérios e pesos:
   | Parâmetro                | Valor       |
   |--------------------------|-------------|
   | Seed                     | 24          |
+  | Número de Clientes       | 400         |
   | Taxa Média de Chegada    | 16          |
   | Taxa Média de Serviço    | 32          |
   | Distribuição             | Exponencial |
 
-- É possível personalizar os experimentos ao sobreescrever o dicionário de parâmetros `parameters` e, em seguida, executar a função `run_sim_and_plot(parameters)`. Por exemplo:
+- É possível personalizar os experimentos ao sobreescrever o dicionário de parâmetros com a função`generate_parameters()` e, em seguida, executar a função `run_sim_and_plot(parameters)`. Por exemplo:
 
 ```python
-parameters['DISTRIBUTION'] = 'exponential'
-parameters['NUM_JOBS'] = 5000
-parameters['MEAN_ARRIVAL_RATE'] = 32
-
+parameters = generate_parameters(NUM_JOBS, MEAN_ARRIVAL_RATE, MEAN_SERVICE_RATE, DISTRIBUTION)
 run_sim_and_plot(parameters)
 ```
 
@@ -52,3 +50,5 @@ run_sim_and_plot(parameters)
 
 
 [1] https://github.com/williewheeler/stats-demos/blob/master/queueing/single-queue-sim.ipynb 
+[2] https://medium.com/wwblog/simulating-an-m-m-1-queue-in-python-f894f5a68db2
+[3] https://web.fe.up.pt/~mac/ensino/docs/IO20032004/FilasEspera.pdf
