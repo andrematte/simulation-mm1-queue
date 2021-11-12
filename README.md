@@ -5,7 +5,7 @@ Aluno: Carlos André de Mattos Teixeira
 Código baseado em: https://github.com/williewheeler/stats-demos/blob/master/queueing/single-queue-sim.ipynb 
 
 ## Descrição do Projeto
----
+
 **Objetivo:** Adicionar dois novos eventos no simulador de fila M/M/1.
 
 **Requisitos:**
@@ -26,9 +26,9 @@ O simulador será avaliado com base nos seguintes critérios e pesos:
 
 
 ## Instruções de Execução
----
 
-- As simulações são executadas através do arquivo *Jupyter Notebook* `experiments.ipynb`.
+
+- As simulações são executadas através do arquivo *Jupyter Notebook* [`experiments.ipynb`](https://github.com/andrematte/simulation-mm1-queue/blob/main/experiments.ipynb).
 - Para executar uma simulação com as configurações padrão, basta executar a função `run_sim_and_plot(parameters)`. As configurações padrão são as seguintes:
   
   | Parâmetro                | Valor       |
@@ -49,6 +49,6 @@ run_sim_and_plot(parameters)
 ```
 
 ## Referências
----
+
 
 [1] https://github.com/williewheeler/stats-demos/blob/master/queueing/single-queue-sim.ipynb 
